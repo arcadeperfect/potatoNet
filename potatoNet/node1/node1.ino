@@ -10,6 +10,7 @@
 #include <RF24Network.h>
 #include <RF24.h>
 #include <SPI.h>
+#include <TurnoutPulser.h>
 
 //#define input_1 5
 //#define input_2 6
@@ -17,10 +18,15 @@
 //#define output2 3
 #define led 2
 
+int tPin1 = 3;
+int tPin2 = 4;
+TurnoutPulser turnout(tPin2, tPin1);
+
 int input_01 = 5;
 int input_02 = 6;
-int output_01 = 2;
+//int output_01 = 2;
 int output_02 = 3;
+
 
 struct Inputs {
   int input_01;
@@ -50,7 +56,7 @@ const uint16_t base_node = 00;      // Address of the other node in Octal format
 //const uint16_t node022 = 022;
 
 
-
+int rando = 0;
 
 
 void setup() {
@@ -60,27 +66,36 @@ void setup() {
   network.begin(90, this_node);  //(channel, node address)
   radio.setDataRate(RF24_2MBPS);
   pinMode(input_01, INPUT_PULLUP);
-  pinMode(output_01, OUTPUT);
+  //pinMode(output_01, OUTPUT);
+  turnout.begin();
 
 }
 
 void loop() {
+  turnout.loop();
   network.update();
+
   //===== Receiving =====//
   while ( network.available() ) {     // Is there any incoming data?
     RF24NetworkHeader header;
     Outputs incoming;
     network.read(header, &incoming, sizeof(incoming)); // Read the incoming data
     this_outputs = incoming;
-    digitalWrite(led, this_outputs.output_01);
+    //Serial.println(incoming);
+
+    //    digitalWrite(led, this_outputs.output_01);
+
   }
   //===== Sending =====//
 
-  this_inputs.input_01 = !digitalRead(input_01);
+    this_inputs.input_01 = !digitalRead(input_01);
+  
+    RF24NetworkHeader header2(base_node);     // (Address where the data is going)
+    bool ok = network.write(header2, &this_inputs, sizeof(this_inputs)); // Send the data
 
-  RF24NetworkHeader header2(base_node);     // (Address where the data is going)
-  bool ok = network.write(header2, &this_inputs, sizeof(this_inputs)); // Send the data
-
-
+  //====== Netorksley over =====//
+  Serial.println(this_outputs.output_01);
+  turnout.set(this_outputs.output_01);
+  Serial.println(this_outputs.output_01);
   delay(5);
 }
