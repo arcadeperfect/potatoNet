@@ -1,5 +1,5 @@
 /*
-  Potatonet node 1
+  Potatonet node 3
 */
 
 #include <RF24Network.h>
@@ -7,7 +7,7 @@
 #include <SPI.h>
 //#include <TurnoutPulser.h>
 
-int dly =5;
+int dly = 5;
 
 //#define led 2
 
@@ -48,16 +48,16 @@ Outputs this_outputs;
 
 RF24 radio(10, 9);               // nRF24L01 (CE,CSN)
 RF24Network network(radio);      // Include the radio in the network
-const uint16_t this_node = 01;   // Address of this node in Octal format ( 04,031, etc)
+const uint16_t this_node = 03;   // Address of this node in Octal format ( 04,031, etc)
 const uint16_t base_node = 00;      // Address of the other node in Octal format
 //const uint16_t node012 = 012;
 //const uint16_t node022 = 022;
 
 
+int rando = 0;
+
+
 void setup() {
-
-
-
   Serial.begin(9600);
   SPI.begin();
   radio.begin();
@@ -74,38 +74,30 @@ void loop() {
   network.update();
 
   //===== Receiving =====//
+  while ( network.available() ) {     // Is there any incoming data?
+    RF24NetworkHeader header;
+    Outputs incoming;
+    network.read(header, &incoming, sizeof(incoming)); // Read the incoming data
+    this_outputs = incoming;
+    //Serial.println(incoming);
 
-  //  while ( network.available() ) {     // Is there any incoming data?
-  //    RF24NetworkHeader header;
-  //    Outputs incoming;
-  //    network.read(header, &incoming, sizeof(incoming)); // Read the incoming data
-  //    this_outputs = incoming;
-  //
-  //  }
+    //    digitalWrite(led, this_outputs.output_01);
 
+  }
   //===== Sending =====//
 
-  this_inputs.input_01 = !digitalRead(6);
-  this_inputs.input_02 = !digitalRead(7);
-
-  Serial.println(this_inputs.input_01);
-  
+  this_inputs.input_01 = !digitalRead(input_01);
+  this_inputs.input_02 = !digitalRead(input_02);
+  Serial.print(this_inputs.input_01);
   Serial.println(this_inputs.input_02);
-
-
-
-  //  Serial.print(this_inputs.input_01);
-  //  Serial.print("    ");
-  //  Serial.println(this_inputs.input_02);
 
   RF24NetworkHeader header2(00);     // (Address where the data is going)
   bool ok = network.write(header2, &this_inputs, sizeof(this_inputs)); // Send the data
-
   if (ok) {
-    Serial.println("seding succeeded");
+    Serial.println("sent ok");
 
   } else {
-    Serial.println("sending failed");
+    Serial.println("not sent");
   }
 
   //====== Netorksley over =====//
@@ -114,10 +106,3 @@ void loop() {
 
   delay(dly);
 }
-
-
-
-
-//void ledTest() {
-//
-//}
